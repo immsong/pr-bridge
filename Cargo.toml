@@ -4,3 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# 비동기 런타임
+tokio = { version = "1.40", features = ["full"] }
+
+# 환경변수
+dotenv = "0.15"
+envy = "0.4"  # 환경변수 -> 구조체 자동 매핑
+
+# 직렬화
+serde = { version = "1.0", features = ["derive"] }
+
+# 에러 처리
+anyhow = "1.0"
+thiserror = "2.0.17"
+
+# 로깅
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
+tracing-appender = "0.2"
