@@ -1,6 +1,6 @@
 mod config;
-
-use tracing::{error, info};
+mod db;
+use tracing::{debug, error, info};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, fmt::time::ChronoLocal, fmt::writer::MakeWriterExt};
 
@@ -91,20 +91,54 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    info!("Server will listen on: {}", config.server_addr());
-    info!("Database URL: {}", config.database_url);
-    info!("GitHub token: {:?}", config.github_token);
-    info!("Git SSH key path: {:?}", config.git_ssh_key_path);
-    info!("Git SSH key passphrase: {:?}", config.git_ssh_key_passphrase);
-    info!("Git use SSH agent: {}", config.git_use_ssh_agent);
-    info!("Jenkins URL: {}", config.jenkins_url);
-    info!("Jenkins user: {}", config.jenkins_user);
-    info!("Jenkins token: {}", config.jenkins_token);
-    info!("Poll interval: {}s", config.poll_interval_seconds);
+    // DB 연결
+    let pool = db::Pool::create_pool(&config.database_url).await?;
+    let migration_result = db::Migration::run(&pool).await;
+    match migration_result {
+        Ok(()) => {
+            info!("Migrations completed successfully");
+        }
+        Err(e) => {
+            error!("Failed to run migrations: {}", e);
+            return Err(e);
+        }
+    }
 
-    // TODO: DB 연결
+    let mut github_api_poll_interval = 300;
+    let mut sync_refs_interval = 180;
+
+    let system_settings = db::Queries::get_system_settings(&pool).await?;
+    debug!("System settings: {:?}", system_settings);
+    if system_settings.get("github_api_poll_interval").is_none() {
+        error!("github_api_poll_interval is not set");
+    } else {
+        github_api_poll_interval = system_settings
+            .get("github_api_poll_interval")
+            .unwrap()
+            .parse()
+            .unwrap();
+    }
+
+    if system_settings.get("sync_refs_interval").is_none() {
+        error!("sync_refs_interval is not set");
+    } else {
+        sync_refs_interval = system_settings
+            .get("sync_refs_interval")
+            .unwrap()
+            .parse()
+            .unwrap();
+    }
+
     // TODO: 스케줄러 시작
+    debug!("github_api_poll_interval: {}", github_api_poll_interval);
+    debug!("sync_refs_interval: {}", sync_refs_interval);
     // TODO: WebSocket 서버 시작
+
+    info!("Server started. Press Ctrl+C to stop.");
+
+    // Ctrl+C 대기
+    tokio::signal::ctrl_c().await?;
+    info!("Shutting down...");
 
     Ok(())
 }
