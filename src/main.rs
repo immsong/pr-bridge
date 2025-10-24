@@ -141,4 +141,17 @@ async fn main() -> anyhow::Result<()> {
     info!("Shutting down...");
 
     Ok(())
+
+    // let scheduler = scheduler::Scheduler::new(
+    //     pool,
+    //     github_api_poll_interval,
+    //     sync_refs_interval,
+    //     config.github_token.clone(),
+    // );
+    
+    // tokio::spawn(async move {
+    //     if let Err(e) = scheduler.start().await {
+    //         error!("Scheduler error: {}", e);
+    //     }
+    // });
 }
