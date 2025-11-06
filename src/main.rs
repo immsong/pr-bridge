@@ -1,5 +1,6 @@
 mod config;
 mod db;
+mod ws;
 use tracing::{debug, error, info};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, fmt::time::ChronoLocal, fmt::writer::MakeWriterExt};
@@ -29,10 +30,16 @@ fn setup_logger(display_terminal_log: bool) {
 
     let filter = if cfg!(debug_assertions) {
         // 디버그 빌드일 때는 모든 레벨 출력
-        EnvFilter::from_default_env().add_directive(tracing::Level::TRACE.into())
+        EnvFilter::from_default_env()
+            .add_directive(tracing::Level::TRACE.into())
+            .add_directive("tokio_tungstenite=info".parse().unwrap())
+            .add_directive("tungstenite=info".parse().unwrap())
     } else {
         // 릴리즈 빌드일 때는 INFO 이상만 출력
-        EnvFilter::from_default_env().add_directive(tracing::Level::INFO.into())
+        EnvFilter::from_default_env()
+            .add_directive(tracing::Level::INFO.into())
+            .add_directive("tokio_tungstenite=info".parse().unwrap())
+            .add_directive("tungstenite=info".parse().unwrap())
     };
 
     // non-blocking writer 설정
@@ -132,7 +139,10 @@ async fn main() -> anyhow::Result<()> {
     // TODO: 스케줄러 시작
     debug!("github_api_poll_interval: {}", github_api_poll_interval);
     debug!("sync_refs_interval: {}", sync_refs_interval);
+
     // TODO: WebSocket 서버 시작
+    let ws_server = ws::ws_server::WsServer::new(&pool);
+    ws_server.run(config.server_port).await;
 
     info!("Server started. Press Ctrl+C to stop.");
 
