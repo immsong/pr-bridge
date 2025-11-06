@@ -1,7 +1,8 @@
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Repository {
     pub id: i32,
     pub owner: String,
@@ -12,7 +13,7 @@ pub struct Repository {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct RepositoryPollingHistory {
     pub id: i32,
     pub repository_id: i32,
@@ -20,7 +21,7 @@ pub struct RepositoryPollingHistory {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Branch {
     pub id: i32,
     pub repository_id: i32,
@@ -30,7 +31,7 @@ pub struct Branch {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Tag {
     pub id: i32,
     pub repository_id: i32,
@@ -39,7 +40,7 @@ pub struct Tag {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct PullRequest {
     pub id: i32,
     pub repository_id: i32,
@@ -55,7 +56,7 @@ pub struct PullRequest {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BuildTrigger {
     pub id: i32,
     pub pull_request_id: i32,
@@ -68,7 +69,7 @@ pub struct BuildTrigger {
     pub completed_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct JenkinsMapping {
     pub id: i32,
     pub repository_id: i32,
@@ -79,7 +80,7 @@ pub struct JenkinsMapping {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SystemSetting {
     pub key: String,
     pub value: String,
