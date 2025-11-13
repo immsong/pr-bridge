@@ -21,7 +21,7 @@ pub struct RepositoryPollingHistory {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, PartialEq)]
 pub struct Branch {
     pub id: i32,
     pub repository_id: i32,

@@ -1,9 +1,13 @@
 mod config;
 mod db;
+mod git;
+mod scheduler;
 mod ws;
 use tracing::{debug, error, info};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, fmt::time::ChronoLocal, fmt::writer::MakeWriterExt};
+
+use crate::{git::GitClient, scheduler::scheduler::Scheduler};
 
 /// 로그 파일 쓰기 작업을 위한 백그라운드 워커 가드 전역 저장소
 ///
@@ -136,11 +140,13 @@ async fn main() -> anyhow::Result<()> {
             .unwrap();
     }
 
-    // TODO: 스케줄러 시작
-    debug!("github_api_poll_interval: {}", github_api_poll_interval);
-    debug!("sync_refs_interval: {}", sync_refs_interval);
+    let git_client = GitClient::new(config.clone());
 
-    // TODO: WebSocket 서버 시작
+    // 스케줄러 시작
+    let scheduler = Scheduler::new(pool.clone(), github_api_poll_interval, sync_refs_interval, git_client);
+    scheduler.start().await;
+
+    // WebSocket 서버 시작
     let ws_server = ws::ws_server::WsServer::new(&pool);
     ws_server.run(config.server_port).await;
 

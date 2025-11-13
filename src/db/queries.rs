@@ -4,7 +4,10 @@
 //! - DB 실행 후에도 SQLx 관련 경고가 있을 경우: rust-analyzer 재시작 필요
 //! - Ctrl+Shift+P → "rust-analyzer: Restart Server"
 
-use crate::db::{Repository, models::SystemSetting};
+use crate::db::{
+    SystemSetting, Tag,
+    models::{Branch, Repository},
+};
 use anyhow::Result;
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -12,6 +15,7 @@ use std::collections::HashMap;
 pub struct Queries {}
 
 impl Queries {
+    // repository 관련
     pub async fn create_repository(
         pool: &PgPool,
         owner: String,
@@ -87,10 +91,49 @@ impl Queries {
     }
 
     pub async fn get_repository(pool: &PgPool, repo_id: i32) -> Result<Repository> {
-        let repository = sqlx::query_as!(Repository, "SELECT * FROM repositories WHERE id = $1", repo_id)
-            .fetch_one(pool)
-            .await?;
+        let repository = sqlx::query_as!(
+            Repository,
+            "SELECT * FROM repositories WHERE id = $1",
+            repo_id
+        )
+        .fetch_one(pool)
+        .await?;
         Ok(repository)
+    }
+
+    // branch 관련
+    pub async fn get_branches(pool: &PgPool) -> Result<Vec<Branch>> {
+        let branches = sqlx::query_as!(Branch, "SELECT * FROM branches")
+            .fetch_all(pool)
+            .await?;
+        Ok(branches)
+    }
+
+    pub async fn insert_branch(
+        pool: &PgPool,
+        repository_id: i32,
+        branch_names: String,
+        branch_head_shas: String,
+    ) -> Result<Branch> {
+        let branch = sqlx::query_as!(
+            Branch,
+            "INSERT INTO branches (repository_id, name, head_sha) VALUES ($1, $2, $3) RETURNING *",
+            repository_id,
+            branch_names,
+            branch_head_shas,
+        )
+        .fetch_one(pool)
+        .await?;
+    
+        Ok(branch)
+    }
+
+    // tag 관련
+    pub async fn get_tags(pool: &PgPool) -> Result<Vec<Tag>> {
+        let tags = sqlx::query_as!(Tag, "SELECT * FROM tags")
+            .fetch_all(pool)
+            .await?;
+        Ok(tags)
     }
 
     pub async fn get_system_settings(pool: &PgPool) -> Result<HashMap<String, String>> {
